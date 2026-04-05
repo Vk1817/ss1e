@@ -4,9 +4,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Star Sports 1 HD </title>
+<title>Star Sports  </title>
 <meta name="referrer" content="no-referrer">
-
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
 
@@ -97,12 +96,11 @@ line-height:1.6;
 }
 </style>
 </head>
-
 <body>
 
 <div class="shaka-video-container" id="player-container">
 <video id="video" autoplay muted playsinline preload="metadata"></video>
-<div class="custom-watermark"></div>
+<div class="custom-watermark"> </div>
 </div>
 
 <script>
@@ -127,7 +125,6 @@ line-height:1.6;
       return true;
     }
   }
-
   function triggerBlockScreen(title, message){
     const container = document.getElementById("player-container");
     const video = document.getElementById("video");
@@ -140,6 +137,7 @@ line-height:1.6;
 
     const overlay = document.createElement("div");
     overlay.className = "block-overlay";
+    overlay.id = "sandbox-block-display";
     overlay.innerHTML = `
       <div class="block-box">
         <div class="block-title">${title}</div>
@@ -149,16 +147,15 @@ line-height:1.6;
     document.body.appendChild(overlay);
     container.style.display = 'none';
   }
-
   if(isSandboxedEnv()){
-    triggerBlockScreen('Disable Sandbox', 'Opening Chrome Browser Only');
+
+    triggerBlockScreen('Disable Sandbox', 'Opening Chrome Browser Only & Disable Ad blocker');
     return;
   }
-
   const CONFIG={
-    streamUrl:"https://jiotvioslive.cdn.jio.com/bpk-tv/Star_Sports_HD1_BTS/output/index.mpd",
-    keyId:"965dc2ddb1d85138ad787999a7f30ca5",
-    key:"859695076e67fe961836b564db6d689c",
+    streamUrl:"https://jiotvioslive.cdn.jio.com/bpk-tv/Star_Sports_HD2_BTS/output/index.mpd",
+    keyId:"9457eb90129456fa8ea95e10ba4ac51e",
+    key:"e620a970cea474c491ac78ae71a4d764",
     cookieUrl:"https://allrounder-live4.pages.dev/api/cookie.json"
   };
 
@@ -178,22 +175,22 @@ line-height:1.6;
     const ui=new shaka.ui.Overlay(player,container,video);
 
     ui.configure({
-      addBigPlayButton: true,
-      controlPanelElements: [
-        "mute",
-        "play_pause",
-        "time_and_duration",
-        "spacer",
-        "quality",
-        "picture_in_picture",
-        "fullscreen"
-      ],
-      seekBarColors: {
-        base: "white",
-        buffered: "red",
-        played: "green"
-      }
-    });
+  addBigPlayButton: true,
+  controlPanelElements: [
+    "mute",
+    "play_pause",
+    "time_and_duration",
+    "spacer",
+    "quality",
+    "picture_in_picture",
+    "fullscreen"
+  ],
+  seekBarColors: {
+    base: "white",
+    buffered: "red", 
+    played: "green"
+  }
+});
 
     player.configure({
       drm:{clearKeys:{[CONFIG.keyId]:CONFIG.key}},
