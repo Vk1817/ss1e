@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Star Sports1 HD </title>
+<title>Star Sports 1 HD </title>
 <meta name="referrer" content="no-referrer">
 
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
@@ -75,16 +76,24 @@ color:#ffffff;
 text-transform:uppercase;
 letter-spacing:2px;
 margin-bottom:20px;
+text-shadow:0 0 10px rgba(255, 0, 0, 0.3);
 }
 
 .block-sub{
 font-size:14px;
-color:rgba(255,255,255,0.6);
+font-weight:500;
+color:rgba(255, 255, 255, 0.6);
+line-height:1.6;
 }
 
+.block-icon{ display: none; }
+.block-note{ display: none; }
+
 @media(max-width:700px){
+.custom-watermark{font-size:9px;top:60%;left:16%}
 .block-title{font-size:28px}
 .block-box{padding:25px}
+.block-sub{font-size:12px}
 }
 </style>
 </head>
@@ -98,11 +107,21 @@ color:rgba(255,255,255,0.6);
 
 <script>
 (function(){
-
+  
   function isSandboxedEnv(){
     try {
       if (window.self === window.top) return false;
-      if (window.frameElement && window.frameElement.hasAttribute("sandbox")) return true;
+      if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
+        return true;
+      }
+      try {
+        document.domain = document.domain;
+        if (window.frameElement && !window.frameElement.getAttribute("sandbox")) {
+             return false;
+        }
+      } catch (e) {
+         return true;
+      }
       return false;
     } catch(e) {
       return true;
@@ -112,7 +131,7 @@ color:rgba(255,255,255,0.6);
   function triggerBlockScreen(title, message){
     const container = document.getElementById("player-container");
     const video = document.getElementById("video");
-
+    
     try {
       video.pause();
       video.removeAttribute('src');
@@ -132,12 +151,12 @@ color:rgba(255,255,255,0.6);
   }
 
   if(isSandboxedEnv()){
-    triggerBlockScreen('Disable Sandbox', 'Open in Chrome & disable ad blocker');
+    triggerBlockScreen('Disable Sandbox', 'Opening Chrome Browser Only');
     return;
   }
 
   const CONFIG={
-    streamUrl:"https://jiotvpllive.cdn.jio.com//bpk-tv/Star_Sports_HD1_BTS/output/index.mpd",
+    streamUrl:"https://jiotvioslive.cdn.jio.com/bpk-tv/Star_Sports_HD1_BTS/output/index.mpd",
     keyId:"965dc2ddb1d85138ad787999a7f30ca5",
     key:"859695076e67fe961836b564db6d689c",
     cookieUrl:"https://allrounder-live4.pages.dev/api/cookie.json"
@@ -168,25 +187,47 @@ color:rgba(255,255,255,0.6);
         "quality",
         "picture_in_picture",
         "fullscreen"
-      ]
+      ],
+      seekBarColors: {
+        base: "white",
+        buffered: "red",
+        played: "green"
+      }
     });
 
     player.configure({
       drm:{clearKeys:{[CONFIG.keyId]:CONFIG.key}},
-      streaming:{lowLatencyMode:true}
+      manifest:{defaultPresentationDelay:5},
+      streaming:{
+        lowLatencyMode:true,
+        bufferingGoal:10,
+        rebufferingGoal:2,
+        safeSeekOffset:5
+      }
     });
 
     let cookieValue="";
 
     try{
-      const response=await fetch(CONFIG.cookieUrl);
+      const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"});
       const data=await response.json();
       cookieValue=data.cookie||"";
     }catch(e){}
 
     if(cookieValue){
       player.getNetworkingEngine().registerRequestFilter((type,request)=>{
+        request.headers["Referer"]="https://www.jiotv.com/";
+        request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
         request.headers["Cookie"]=cookieValue;
+
+        let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
+
+        if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||
+        type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&
+        !request.uris[0].includes("__hdnea__")){
+          const sep=request.uris[0].includes("?")?"&":"?";
+          request.uris[0]+=sep+"__hdnea__="+urlCookie;
+        }
       });
     }
 
@@ -195,12 +236,14 @@ color:rgba(255,255,255,0.6);
       video.play().catch(()=>{});
     }catch(e){}
 
-    video.addEventListener("play",()=>{ video.muted=false; });
+    video.addEventListener("play",()=>{
+      video.muted=false;
+    });
 
   });
-
 })();
 </script>
 
 </body>
 </html>
+
