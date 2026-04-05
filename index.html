@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Star Sports  </title>
+<title>Star Sports // Dillzy </title>
 <meta name="referrer" content="no-referrer">
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
@@ -85,9 +85,6 @@ color:rgba(255, 255, 255, 0.6);
 line-height:1.6;
 }
 
-.block-icon{ display: none; }
-.block-note{ display: none; }
-
 @media(max-width:700px){
 .custom-watermark{font-size:9px;top:60%;left:16%}
 .block-title{font-size:28px}
@@ -96,11 +93,13 @@ line-height:1.6;
 }
 </style>
 </head>
+
 <body>
 
 <div class="shaka-video-container" id="player-container">
-<video id="video" autoplay muted playsinline preload="metadata"></video>
-<div class="custom-watermark"> </div>
+<!-- ✅ removed muted -->
+<video id="video" autoplay playsinline preload="metadata"></video>
+<div class="custom-watermark"></div>
 </div>
 
 <script>
@@ -109,14 +108,10 @@ line-height:1.6;
   function isSandboxedEnv(){
     try {
       if (window.self === window.top) return false;
-      if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
-        return true;
-      }
+      if (window.frameElement && window.frameElement.hasAttribute("sandbox")) return true;
       try {
         document.domain = document.domain;
-        if (window.frameElement && !window.frameElement.getAttribute("sandbox")) {
-             return false;
-        }
+        if (window.frameElement && !window.frameElement.getAttribute("sandbox")) return false;
       } catch (e) {
          return true;
       }
@@ -125,10 +120,11 @@ line-height:1.6;
       return true;
     }
   }
+
   function triggerBlockScreen(title, message){
     const container = document.getElementById("player-container");
     const video = document.getElementById("video");
-    
+
     try {
       video.pause();
       video.removeAttribute('src');
@@ -137,7 +133,6 @@ line-height:1.6;
 
     const overlay = document.createElement("div");
     overlay.className = "block-overlay";
-    overlay.id = "sandbox-block-display";
     overlay.innerHTML = `
       <div class="block-box">
         <div class="block-title">${title}</div>
@@ -147,15 +142,16 @@ line-height:1.6;
     document.body.appendChild(overlay);
     container.style.display = 'none';
   }
-  if(isSandboxedEnv()){
 
+  if(isSandboxedEnv()){
     triggerBlockScreen('Disable Sandbox', 'Opening Chrome Browser Only & Disable Ad blocker');
     return;
   }
+
   const CONFIG={
-    streamUrl:"https://jiotvioslive.cdn.jio.com/bpk-tv/Star_Sports_HD2_BTS/output/index.mpd",
-    keyId:"9457eb90129456fa8ea95e10ba4ac51e",
-    key:"e620a970cea474c491ac78ae71a4d764",
+    streamUrl:"https://jiotvioslive.cdn.jio.com/bpk-tv/Star_Sports_HD1_BTS/output/index.mpd",
+    keyId:"965dc2ddb1d85138ad787999a7f30ca5",
+    key:"859695076e67fe961836b564db6d689c",
     cookieUrl:"https://allrounder-live4.pages.dev/api/cookie.json"
   };
 
@@ -167,7 +163,9 @@ line-height:1.6;
     const video=document.getElementById("video");
     const container=document.getElementById("player-container");
 
-    video.muted=true;
+    // ✅ force sound
+    video.muted=false;
+    video.volume=1;
 
     const player=new shaka.Player();
     await player.attach(video);
@@ -175,22 +173,17 @@ line-height:1.6;
     const ui=new shaka.ui.Overlay(player,container,video);
 
     ui.configure({
-  addBigPlayButton: true,
-  controlPanelElements: [
-    "mute",
-    "play_pause",
-    "time_and_duration",
-    "spacer",
-    "quality",
-    "picture_in_picture",
-    "fullscreen"
-  ],
-  seekBarColors: {
-    base: "white",
-    buffered: "red", 
-    played: "green"
-  }
-});
+      addBigPlayButton: true,
+      controlPanelElements: [
+        "mute","play_pause","time_and_duration","spacer",
+        "quality","picture_in_picture","fullscreen"
+      ],
+      seekBarColors:{
+        base:"white",
+        buffered:"red",
+        played:"green"
+      }
+    });
 
     player.configure({
       drm:{clearKeys:{[CONFIG.keyId]:CONFIG.key}},
@@ -214,28 +207,23 @@ line-height:1.6;
     if(cookieValue){
       player.getNetworkingEngine().registerRequestFilter((type,request)=>{
         request.headers["Referer"]="https://www.jiotv.com/";
-        request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+        request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13)";
         request.headers["Cookie"]=cookieValue;
-
-        let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
-
-        if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||
-        type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&
-        !request.uris[0].includes("__hdnea__")){
-          const sep=request.uris[0].includes("?")?"&":"?";
-          request.uris[0]+=sep+"__hdnea__="+urlCookie;
-        }
       });
     }
 
     try{
       await player.load(CONFIG.streamUrl);
-      video.play().catch(()=>{});
-    }catch(e){}
 
-    video.addEventListener("play",()=>{
-      video.muted=false;
-    });
+      video.play().catch(()=>{
+        // autoplay blocked → click to start sound
+        document.addEventListener("click",()=>{
+          video.muted=false;
+          video.play();
+        },{once:true});
+      });
+
+    }catch(e){}
 
   });
 })();
@@ -243,4 +231,3 @@ line-height:1.6;
 
 </body>
 </html>
-
